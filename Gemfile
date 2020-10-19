@@ -25,8 +25,10 @@ gem 'fog-core', '<= 2.1.0'
 gem 'fog-openstack', '~> 0.3', require: false
 gem 'paperclip', '~> 6.0'
 gem 'paperclip-av-transcoder', '~> 0.6'
-gem 'streamio-ffmpeg', '~> 3.0'
+gem 'streamio-ffmpeg', git: 'https://github.com/mastohost/streamio-ffmpeg.git', ref: '3604bb9b4e90e4b31a7e693333ce73320037b17c'
 gem 'blurhash', '~> 0.1'
+gem 'terrapin', git: 'https://github.com/mastohost/terrapin.git', ref: '77deb17e04eb56cdda4ad6c02ed5757d1290e089'
+gem 'cocaine', git: 'https://github.com/mastohost/cocaine.git', ref: '9f0de98beff7c2b334fe12f1e58b0b1cbedc296e'
 
 gem 'active_model_serializers', '~> 0.10'
 gem 'addressable', '~> 2.7'
