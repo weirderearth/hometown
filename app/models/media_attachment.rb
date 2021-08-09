@@ -59,7 +59,7 @@ class MediaAttachment < ApplicationRecord
 
   IMAGE_STYLES = {
     original: {
-      pixels: 1_638_400, # 1280x1280px
+      pixels: 2_073_600, # 1920x1080px
       file_geometry_parser: FastGeometryParser,
     }.freeze,
 
@@ -287,7 +287,7 @@ class MediaAttachment < ApplicationRecord
       if instance.file_content_type == 'image/gif'
         [:gif_transcoder, :blurhash_transcoder]
       elsif VIDEO_MIME_TYPES.include?(instance.file_content_type)
-        [:video_transcoder, :blurhash_transcoder, :type_corrector]
+        [:transcoder, :blurhash_transcoder, :type_corrector]
       elsif AUDIO_MIME_TYPES.include?(instance.file_content_type)
         [:image_extractor, :transcoder, :type_corrector]
       else
@@ -338,7 +338,7 @@ class MediaAttachment < ApplicationRecord
 
     raise Mastodon::StreamValidationError, 'Video has no video stream' if movie.width.nil? || movie.frame_rate.nil?
     raise Mastodon::DimensionsValidationError, "#{movie.width}x#{movie.height} videos are not supported" if movie.width * movie.height > MAX_VIDEO_MATRIX_LIMIT
-    raise Mastodon::DimensionsValidationError, "#{movie.frame_rate.to_i}fps videos are not supported" if movie.frame_rate > MAX_VIDEO_FRAME_RATE
+    raise Mastodon::DimensionsValidationError, "#{movie.frame_rate.floor}fps videos are not supported" if movie.frame_rate.floor > MAX_VIDEO_FRAME_RATE
   end
 
   def set_meta
@@ -388,7 +388,7 @@ class MediaAttachment < ApplicationRecord
   # paths but ultimately the same file, so it makes sense to memoize the
   # result while disregarding the path
   def ffmpeg_data(path = nil)
-    @ffmpeg_data ||= FFMPEG::Movie.new(path)
+    @ffmpeg_data ||= VideoMetadataExtractor.new(path)
   end
 
   def enqueue_processing

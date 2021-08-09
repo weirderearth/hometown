@@ -71,7 +71,15 @@ class ActivityPub::Activity
   end
 
   def object_uri
-    @object_uri ||= value_or_id(@object)
+    @object_uri ||= begin
+      str = value_or_id(@object)
+
+      if str&.start_with?('bear:')
+        Addressable::URI.parse(str).query_values['u']
+      else
+        str
+      end
+    end
   end
 
   def unsupported_object_type?
@@ -110,13 +118,13 @@ class ActivityPub::Activity
   end
 
   def notify_about_reblog(status)
-    NotifyService.new.call(status.reblog.account, status)
+    NotifyService.new.call(status.reblog.account, :reblog, status)
   end
 
   def notify_about_mentions(status)
     status.active_mentions.includes(:account).each do |mention|
       next unless mention.account.local? && audience_includes?(mention.account)
-      NotifyService.new.call(mention.account, mention)
+      NotifyService.new.call(mention.account, :mention, mention)
     end
   end
 
@@ -136,7 +144,7 @@ class ActivityPub::Activity
   end
 
   def delete_later!(uri)
-    redis.setex("delete_upon_arrival:#{@account.id}:#{uri}", 6.hours.seconds, uri)
+    redis.setex("delete_upon_arrival:#{@account.id}:#{uri}", 6.hours.seconds, true)
   end
 
   def status_from_object
@@ -159,20 +167,20 @@ class ActivityPub::Activity
 
   def dereference_object!
     return unless @object.is_a?(String)
-    return if invalid_origin?(@object)
 
-    object = fetch_resource(@object, true, signed_fetch_account)
-    return unless object.present? && object.is_a?(Hash) && supported_context?(object)
+    dereferencer = ActivityPub::Dereferencer.new(@object, permitted_origin: @account.uri, signature_account: signed_fetch_account)
 
-    @object = object
+    @object = dereferencer.object unless dereferencer.object.nil?
   end
 
   def signed_fetch_account
+    return Account.find(@options[:delivered_to_account_id]) if @options[:delivered_to_account_id].present?
+
     first_mentioned_local_account || first_local_follower
   end
 
   def first_mentioned_local_account
-    audience = (as_array(@json['to']) + as_array(@json['cc'])).uniq
+    audience = (as_array(@json['to']) + as_array(@json['cc'])).map { |x| value_or_id(x) }.uniq
     local_usernames = audience.select { |uri| ActivityPub::TagManager.instance.local_uri?(uri) }
                               .map { |uri| ActivityPub::TagManager.instance.uri_to_local_id(uri, :username) }
 
@@ -202,10 +210,20 @@ class ActivityPub::Activity
     end
   end
 
-  def lock_or_return(key, expire_after = 7.days.seconds)
+  def lock_or_return(key, expire_after = 2.hours.seconds)
     yield if redis.set(key, true, nx: true, ex: expire_after)
   ensure
     redis.del(key)
+  end
+
+  def lock_or_fail(key)
+    RedisLock.acquire({ redis: Redis.current, key: key }) do |lock|
+      if lock.acquired?
+        yield
+      else
+        raise Mastodon::RaceConditionError
+      end
+    end
   end
 
   def fetch?

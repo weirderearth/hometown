@@ -6,6 +6,7 @@ import ImmutablePropTypes from 'react-immutable-proptypes';
 import DropdownMenuContainer from '../../../containers/dropdown_menu_container';
 import { defineMessages, injectIntl } from 'react-intl';
 import { me, isStaff } from '../../../initial_state';
+import classNames from 'classnames';
 
 const messages = defineMessages({
   delete: { id: 'status.delete', defaultMessage: 'Delete' },
@@ -14,7 +15,7 @@ const messages = defineMessages({
   mention: { id: 'status.mention', defaultMessage: 'Mention @{name}' },
   reply: { id: 'status.reply', defaultMessage: 'Reply' },
   reblog: { id: 'status.reblog', defaultMessage: 'Boost' },
-  reblog_private: { id: 'status.reblog_private', defaultMessage: 'Boost to original audience' },
+  reblog_private: { id: 'status.reblog_private', defaultMessage: 'Boost with original visibility' },
   cancel_reblog_private: { id: 'status.cancel_reblog_private', defaultMessage: 'Unboost' },
   cannot_reblog: { id: 'status.cannot_reblog', defaultMessage: 'This post cannot be boosted' },
   local_only: { id: 'status.local_only', defaultMessage: 'This post is only visible by other users of your instance' },
@@ -187,10 +188,11 @@ class ActionBar extends React.PureComponent {
   render () {
     const { status, relationship, intl } = this.props;
 
-    const publicStatus = ['public', 'unlisted'].includes(status.get('visibility'));
+    const publicStatus       = ['public', 'unlisted'].includes(status.get('visibility'));
     const mutingConversation = status.get('muted');
     const federated = !status.get('local_only');
     const account            = status.get('account');
+    const writtenByMe        = status.getIn(['account', 'id']) === me;
 
     let menu = [];
 
@@ -200,12 +202,12 @@ class ActionBar extends React.PureComponent {
       menu.push(null);
     }
 
-    if (me === status.getIn(['account', 'id'])) {
+    if (writtenByMe) {
       if (publicStatus) {
         menu.push({ text: intl.formatMessage(status.get('pinned') ? messages.unpin : messages.pin), action: this.handlePinClick });
+        menu.push(null);
       }
 
-      menu.push(null);
       menu.push({ text: intl.formatMessage(mutingConversation ? messages.unmuteConversation : messages.muteConversation), action: this.handleConversationMuteClick });
       menu.push(null);
       menu.push({ text: intl.formatMessage(messages.delete), action: this.handleDeleteClick });
@@ -275,7 +277,7 @@ class ActionBar extends React.PureComponent {
     return (
       <div className='detailed-status__action-bar'>
         <div className='detailed-status__button'><IconButton title={intl.formatMessage(messages.reply)} icon={status.get('in_reply_to_account_id') === status.getIn(['account', 'id']) ? 'reply' : replyIcon} onClick={this.handleReplyClick} /></div>
-        <div className='detailed-status__button'><IconButton disabled={!publicStatus && !reblogPrivate} active={status.get('reblogged')} title={reblogTitle} icon='retweet' onClick={this.handleReblogClick} /></div>
+        <div className='detailed-status__button' ><IconButton className={classNames({ reblogPrivate })} disabled={!publicStatus && !reblogPrivate} active={status.get('reblogged')} title={reblogTitle} icon='retweet' onClick={this.handleReblogClick} /></div>
         <div className='detailed-status__button'><IconButton className='star-icon' animate active={status.get('favourited')} title={intl.formatMessage(messages.favourite)} icon='star' onClick={this.handleFavouriteClick} /></div>
         {shareButton}
         <div className='detailed-status__button'><IconButton className='bookmark-icon' active={status.get('bookmarked')} title={intl.formatMessage(messages.bookmark)} icon='bookmark' onClick={this.handleBookmarkClick} /></div>
