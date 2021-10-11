@@ -1069,10 +1069,10 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@emotion/cache@^11.0.0", "@emotion/cache@^11.1.3":
-  version "11.1.3"
-  resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-11.1.3.tgz#c7683a9484bcd38d5562f2b9947873cf66829afd"
-  integrity sha512-n4OWinUPJVaP6fXxWZD9OUeQ0lY7DvtmtSuqtRWT0Ofo/sBLCVSgb4/Oa0Q5eFxcwablRKjUXqXtNZVyEwCAuA==
+"@emotion/cache@^11.1.3", "@emotion/cache@^11.4.0":
+  version "11.4.0"
+  resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-11.4.0.tgz#293fc9d9a7a38b9aad8e9337e5014366c3b09ac0"
+  integrity sha512-Zx70bjE7LErRO9OaZrhf22Qye1y4F7iDl+ITjet0J+i+B88PrAOBkKvaAWhxsZf72tDLajwCgfCjJ2dvH77C3g==
   dependencies:
     "@emotion/memoize" "^0.7.4"
     "@emotion/sheet" "^1.0.0"
@@ -1603,6 +1603,13 @@
     "@types/react" "*"
     hoist-non-react-statics "^3.3.0"
     redux "^4.0.0"
+
+"@types/react-transition-group@^4.4.0":
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-4.4.3.tgz#b0994da0a7023d67dbb4a8910a62112bc00d5688"
+  integrity sha512-fUx5muOWSYP8Bw2BUQ9M9RK9+W1XBK/7FLJ8PTQpnpTEkn0ccyMffyEQvan4C3h53gHdx7KE5Qrxi/LnUGQtdg==
+  dependencies:
+    "@types/react" "*"
 
 "@types/react@*":
   version "17.0.3"
@@ -8842,13 +8849,6 @@ react-infinite-scroller@^1.0.12:
   dependencies:
     prop-types "^15.5.8"
 
-react-input-autosize@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-3.0.0.tgz#6b5898c790d4478d69420b55441fcc31d5c50a85"
-  integrity sha512-nL9uS7jEs/zu8sqwFE5MAPx6pPkNAriACQ2rGLlqmKr2sPGtN7TXTyDdQt4lbNXVx7Uzadb40x8qotIuru6Rhg==
-  dependencies:
-    prop-types "^15.5.8"
-
 react-intl-translations-manager@^5.0.3:
   version "5.0.3"
   resolved "https://registry.yarnpkg.com/react-intl-translations-manager/-/react-intl-translations-manager-5.0.3.tgz#aee010ecf35975673e033ca5d7d3f4147894324d"
@@ -8975,17 +8975,17 @@ react-router@^4.3.1:
     prop-types "^15.6.1"
     warning "^4.0.1"
 
-react-select@^4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/react-select/-/react-select-4.3.0.tgz#6bde634ae7a378b49f3833c85c126f533483fa2e"
-  integrity sha512-SBPD1a3TJqE9zoI/jfOLCAoLr/neluaeokjOixr3zZ1vHezkom8K0A9J4QG9IWDqIDE9K/Mv+0y1GjidC2PDtQ==
+react-select@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/react-select/-/react-select-5.1.0.tgz#ac384c8e25ba6f03126026192b2bdad0f53fbf50"
+  integrity sha512-SkEBD1AYsSXrIdNj5HBt7+Ehe+jxdiB448J0atJqR6lE3l/GcFlRf4JYB3NlHe/02jrW4AnIQLo1t0IqWrxXOw==
   dependencies:
     "@babel/runtime" "^7.12.0"
-    "@emotion/cache" "^11.0.0"
+    "@emotion/cache" "^11.4.0"
     "@emotion/react" "^11.1.1"
+    "@types/react-transition-group" "^4.4.0"
     memoize-one "^5.0.0"
     prop-types "^15.6.0"
-    react-input-autosize "^3.0.0"
     react-transition-group "^4.3.0"
 
 react-sparklines@^1.7.0:
