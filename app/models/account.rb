@@ -543,6 +543,7 @@ class Account < ApplicationRecord
                 LIMIT :limit OFFSET :offset
               SQL
             end
+          end
 
     def first_degree(options)
       if options[:following] && options[:followers]
