@@ -153,6 +153,11 @@ class PostStatusService < BaseService
     end
   end
 
+  def expires_soon?
+    expires_at = @status&.status_expire&.expires_at
+    expires_at.present? && expires_at <= Time.now.utc + MIN_SCHEDULE_OFFSET
+  end
+
   def validate_media!
     return if @options[:media_ids].blank? || !@options[:media_ids].is_a?(Enumerable)
 
