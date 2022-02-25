@@ -537,43 +537,43 @@ class Account < ApplicationRecord
               SQL
             end
     end
-  end
 
-  def first_degree(options)
-    if options[:following] && options[:followers]
-      <<-SQL
-        WITH first_degree AS (
-          SELECT target_account_id
-          FROM follows
-          WHERE account_id = :account_id
-          UNION ALL
-          SELECT account_id
-          FROM follows
-          WHERE target_account_id = :account_id
-          UNION ALL
-          SELECT :account_id
-        )
-      SQL
-    elsif options[:following]
-      <<-SQL
-        WITH first_degree AS (
-          SELECT target_account_id
-          FROM follows
-          WHERE account_id = :account_id
-          UNION ALL
-          SELECT :account_id
-        )
-      SQL
-    elsif options[:followers]
-      <<-SQL
-        WITH first_degree AS (
-          SELECT account_id
-          FROM follows
-          WHERE target_account_id = :account_id
-          UNION ALL
-          SELECT :account_id
-        )
-      SQL
+    def first_degree(options)
+      if options[:following] && options[:followers]
+        <<-SQL
+          WITH first_degree AS (
+            SELECT target_account_id
+            FROM follows
+            WHERE account_id = :account_id
+            UNION ALL
+            SELECT account_id
+            FROM follows
+            WHERE target_account_id = :account_id
+            UNION ALL
+            SELECT :account_id
+          )
+        SQL
+      elsif options[:following]
+        <<-SQL
+          WITH first_degree AS (
+            SELECT target_account_id
+            FROM follows
+            WHERE account_id = :account_id
+            UNION ALL
+            SELECT :account_id
+          )
+        SQL
+      elsif options[:followers]
+        <<-SQL
+          WITH first_degree AS (
+            SELECT account_id
+            FROM follows
+            WHERE target_account_id = :account_id
+            UNION ALL
+            SELECT :account_id
+          )
+        SQL
+      end
     end
   end
 
