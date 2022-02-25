@@ -107,6 +107,7 @@ class Account < ApplicationRecord
   scope :recent, -> { reorder(id: :desc) }
   scope :bots, -> { where(actor_type: %w(Application Service)) }
   scope :groups, -> { where(actor_type: 'Group') }
+  scope :without_groups, -> { where.not(actor_type: 'Group') }
   scope :alphabetic, -> { order(domain: :asc, username: :asc) }
   scope :matches_username, ->(value) { where(arel_table[:username].matches("#{value}%")) }
   scope :matches_display_name, ->(value) { where(arel_table[:display_name].matches("#{value}%")) }
@@ -143,7 +144,7 @@ class Account < ApplicationRecord
 
   delegate :chosen_languages, to: :user, prefix: false, allow_nil: true
 
-  update_index('accounts#account', :self)
+  update_index('accounts', :self)
 
   def local?
     domain.nil?
@@ -340,15 +341,6 @@ class Account < ApplicationRecord
     self.fields = tmp
   end
 
-  def save_with_optional_media!
-    save!
-  rescue ActiveRecord::RecordInvalid
-    self.avatar = nil
-    self.header = nil
-
-    save!
-  end
-
   def hides_followers?
     hide_collections? || user_hides_network?
   end
@@ -383,6 +375,18 @@ class Account < ApplicationRecord
     @synchronization_uri_prefix ||= "#{uri[URL_PREFIX_RE]}/"
   end
 
+  def permitted_statuses(account)
+    if account.class.name == 'Account' && account.id == id
+      Status.include_expired.where(account_id: id)
+    else
+      statuses
+    end.permitted_for(self, account)
+  end
+
+  def index_text
+    ActionController::Base.helpers.strip_tags(note)
+  end
+
   class Field < ActiveModelSerializers::Model
     attributes :name, :value, :verified_at, :account
 
@@ -393,7 +397,7 @@ class Account < ApplicationRecord
         account:     account,
         name:        attributes['name'].strip[0, string_limit],
         value:       attributes['value'].strip[0, string_limit],
-        verified_at: attributes['verified_at']&.to_datetime,
+        verified_at: attributes['verified_at']&.to_time,
       )
     end
 
@@ -438,8 +442,12 @@ class Account < ApplicationRecord
       DeliveryFailureTracker.without_unavailable(urls)
     end
 
-    def search_for(terms, limit = 10, offset = 0)
+    def search_for(terms, limit = 10, group = false, offset = 0)
       tsquery = generate_query_for_search(terms)
+
+      sql_where_group = <<-SQL if group
+          AND accounts.actor_type = 'Group'
+      SQL
 
       sql = <<-SQL.squish
         SELECT
@@ -449,6 +457,7 @@ class Account < ApplicationRecord
         WHERE to_tsquery('simple', :tsquery) @@ #{TEXTSEARCH}
           AND accounts.suspended_at IS NULL
           AND accounts.moved_to_account_id IS NULL
+          #{sql_where_group}
         ORDER BY rank DESC
         LIMIT :limit OFFSET :offset
       SQL
@@ -458,9 +467,9 @@ class Account < ApplicationRecord
       records
     end
 
-    def advanced_search_for(terms, account, limit = 10, following = false, offset = 0)
+    def advanced_search_for(terms, account, limit = 10, offset = 0, options = {})
       tsquery = generate_query_for_search(terms)
-      sql = advanced_search_for_sql_template(following)
+      sql = advanced_search_for_sql_template(tsquery, options)
       records = find_by_sql([sql, id: account.id, limit: limit, offset: offset, tsquery: tsquery])
       ActiveRecord::Associations::Preloader.new.preload(records, :account_stat)
       records
@@ -494,44 +503,91 @@ class Account < ApplicationRecord
       "' #{terms} ':*"
     end
 
-    def advanced_search_for_sql_template(following)
-      if following
-        <<-SQL.squish
+    def advanced_search_for_sql_template(tsquery, options)
+      sql_where_group = <<-SQL if options[:group]
+          AND accounts.actor_type = 'Group'
+      SQL
+
+      sql = if options[:following] || options[:followers]
+              sql_first_degree = first_degree(options)
+
+              <<-SQL.squish
+                #{sql_first_degree}
+                SELECT
+                  accounts.*,
+                  (count(f.id) + 1) * ts_rank_cd(#{textsearch}, #{query}, 32) AS rank
+                FROM accounts
+                LEFT OUTER JOIN follows AS f ON (accounts.id = f.account_id AND f.target_account_id = :account_id)
+                WHERE accounts.id IN (SELECT * FROM first_degree)
+                  AND #{query} @@ #{textsearch}
+                  AND accounts.suspended_at IS NULL
+                  AND accounts.moved_to_account_id IS NULL
+                  #{sql_where_group}
+                GROUP BY accounts.id
+                ORDER BY rank DESC
+                LIMIT :limit OFFSET :offset
+              SQL
+            else
+              <<-SQL.squish
+                SELECT
+                  accounts.*,
+                  (count(f.id) + 1) * ts_rank_cd(#{textsearch}, #{query}, 32) AS rank
+                FROM accounts
+                LEFT OUTER JOIN follows AS f ON (accounts.id = f.account_id AND f.target_account_id = :account_id) OR (accounts.id = f.target_account_id AND f.account_id = :account_id)
+                WHERE #{query} @@ #{textsearch}
+                  AND accounts.suspended_at IS NULL
+                  AND accounts.moved_to_account_id IS NULL
+                  #{sql_where_group}
+                GROUP BY accounts.id
+                ORDER BY rank DESC
+                LIMIT :limit OFFSET :offset
+              SQL
+            end
+
+    def first_degree(options)
+      if options[:following] && options[:followers]
+        <<-SQL
           WITH first_degree AS (
             SELECT target_account_id
             FROM follows
-            WHERE account_id = :id
+            WHERE account_id = :account_id
             UNION ALL
-            SELECT :id
+            SELECT account_id
+            FROM follows
+            WHERE target_account_id = :account_id
+            UNION ALL
+            SELECT :account_id
           )
-          SELECT
-            accounts.*,
-            (count(f.id) + 1) * ts_rank_cd(#{TEXTSEARCH}, to_tsquery('simple', :tsquery), 32) AS rank
-          FROM accounts
-          LEFT OUTER JOIN follows AS f ON (accounts.id = f.account_id AND f.target_account_id = :id)
-          WHERE accounts.id IN (SELECT * FROM first_degree)
-            AND to_tsquery('simple', :tsquery) @@ #{TEXTSEARCH}
-            AND accounts.suspended_at IS NULL
-            AND accounts.moved_to_account_id IS NULL
-          GROUP BY accounts.id
-          ORDER BY rank DESC
-          LIMIT :limit OFFSET :offset
         SQL
-      else
-        <<-SQL.squish
-          SELECT
-            accounts.*,
-            (count(f.id) + 1) * ts_rank_cd(#{TEXTSEARCH}, to_tsquery('simple', :tsquery), 32) AS rank
-          FROM accounts
-          LEFT OUTER JOIN follows AS f ON (accounts.id = f.account_id AND f.target_account_id = :id) OR (accounts.id = f.target_account_id AND f.account_id = :id)
-          WHERE to_tsquery('simple', :tsquery) @@ #{TEXTSEARCH}
-            AND accounts.suspended_at IS NULL
-            AND accounts.moved_to_account_id IS NULL
-          GROUP BY accounts.id
-          ORDER BY rank DESC
-          LIMIT :limit OFFSET :offset
+      elsif options[:following]
+        <<-SQL
+          WITH first_degree AS (
+            SELECT target_account_id
+            FROM follows
+            WHERE account_id = :account_id
+            UNION ALL
+            SELECT :account_id
+          )
+        SQL
+      elsif options[:followers]
+        <<-SQL
+          WITH first_degree AS (
+            SELECT account_id
+            FROM follows
+            WHERE target_account_id = :account_id
+            UNION ALL
+            SELECT :account_id
+          )
         SQL
       end
+    end
+
+    def generate_query_for_search(terms)
+      terms      = Arel.sql(connection.quote(terms.gsub(/['?\\:]/, ' ')))
+      textsearch = "(setweight(to_tsvector('simple', accounts.display_name), 'A') || setweight(to_tsvector('simple', accounts.username), 'B') || setweight(to_tsvector('simple', coalesce(accounts.domain, '')), 'C'))"
+      query      = "to_tsquery('simple', ''' ' || #{terms} || ' ''' || ':*')"
+
+      [textsearch, query]
     end
   end
 
