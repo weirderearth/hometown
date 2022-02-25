@@ -1,5 +1,33 @@
 # frozen_string_literal: true
 
+class Handler < ::Ox::Sax
+  attr_reader :srcs
+  attr_reader :alts
+  def initialize(block)
+    @stack = []
+    @srcs = []
+    @alts = {}
+  end
+
+  def start_element(element_name)
+    @stack << [element_name, {}]
+  end
+
+  def end_element(element_name)
+    self_name, self_attributes = @stack[-1]
+    if self_name == :img && !self_attributes[:src].nil?
+      @srcs << self_attributes[:src]
+      @alts[self_attributes[:src]] = self_attributes[:alt]
+    end
+    @stack.pop
+  end
+
+  def attr(attribute_name, attribute_value)
+    _name, attributes = @stack.last
+    attributes[attribute_name] = attribute_value
+  end
+end
+
 class ActivityPub::Activity::Create < ActivityPub::Activity
   def perform
     dereference_object!
@@ -117,37 +145,9 @@ class ActivityPub::Activity::Create < ActivityPub::Activity
         conversation: conversation_from_context,
         media_attachment_ids: process_attachments.take(4).map(&:id),
         poll: process_poll,
-        activity_pub_type: @object['type']
-        quote: quote,
+        activity_pub_type: @object['type'],
+        quote: quote
       }
-    end
-  end
-
-  class Handler < ::Ox::Sax
-    attr_reader :srcs
-    attr_reader :alts
-    def initialize(block)
-      @stack = []
-      @srcs = []
-      @alts = {}
-    end
-
-    def start_element(element_name)
-      @stack << [element_name, {}]
-    end
-
-    def end_element(element_name)
-      self_name, self_attributes = @stack[-1]
-      if self_name == :img && !self_attributes[:src].nil?
-        @srcs << self_attributes[:src]
-        @alts[self_attributes[:src]] = self_attributes[:alt]
-      end
-      @stack.pop
-    end
-
-    def attr(attribute_name, attribute_value)
-      _name, attributes = @stack.last
-      attributes[attribute_name] = attribute_value
     end
   end
 
