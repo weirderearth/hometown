@@ -458,9 +458,9 @@ class Account < ApplicationRecord
       records
     end
 
-    def advanced_search_for(terms, account, limit = 10, following = false, offset = 0)
+    def advanced_search_for(terms, account, limit = 10, offset = 0, options = {})
       tsquery = generate_query_for_search(terms)
-      sql = advanced_search_for_sql_template(following)
+      sql = advanced_search_for_sql_template(tsquery, options)
       records = find_by_sql([sql, id: account.id, limit: limit, offset: offset, tsquery: tsquery])
       ActiveRecord::Associations::Preloader.new.preload(records, :account_stat)
       records
