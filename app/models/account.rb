@@ -504,6 +504,8 @@ class Account < ApplicationRecord
     end
 
     def advanced_search_for_sql_template(tsquery, options)
+      textsearch, query = tsquery
+
       sql_where_group = <<-SQL if options[:group]
           AND accounts.actor_type = 'Group'
       SQL
