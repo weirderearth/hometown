@@ -168,4 +168,17 @@ class Auth::SessionsController < Devise::SessionsController
       user_agent: request.user_agent
     )
   end
+
+  def remember_me(user)
+    session_id = cookies.signed['_session_id']
+    session_id = user.activate_session(request) unless user.session_active?(session_id)
+
+    cookies.signed['_session_id'] = {
+      value: session_id,
+      expires: 1.year.from_now,
+      httponly: true,
+      secure: (Rails.env.production? || ENV['LOCAL_HTTPS'] == 'true'),
+      same_site: :lax,
+    }
+  end
 end
