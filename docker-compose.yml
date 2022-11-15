@@ -5,6 +5,7 @@ services:
     restart: always
     image: postgres:9.6-alpine
     shm_size: 256mb
+    command: postgres -c max_connections=300 -c shared_buffers=1GB -c effective_cache_size=3GB -c maintenance_work_mem=256MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=1747kB -c min_wal_size=2GB -c max_wal_size=8GB -c max_worker_processes=4 -c max_parallel_workers_per_gather=2
     networks:
       - internal_network
     healthcheck:
@@ -22,30 +23,15 @@ services:
     volumes:
       - ./redis:/data
 
-#  es:
-#    restart: always
-#    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
-#    environment:
-#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-#      - "cluster.name=es-mastodon"
-#      - "discovery.type=single-node"
-#      - "bootstrap.memory_lock=true"
-#    networks:
-#      - internal_network
-#    healthcheck:
-#      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
-#    volumes:
-#      - ./elasticsearch:/usr/share/elasticsearch/data
-#    ulimits:
-#      memlock:
-#        soft: -1
-#        hard: -1
-
   web:
     build: .
     image: tootsuite/mastodon:v3.4.6
     restart: always
     env_file: .env.production
+    ## 2022-11-14 - Nix - Added MAX_CONCURRENCY
+    environment:
+      - MAX_THREADS=10
+      - MAX_CONCURRENCY=3
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     networks:
       - external_network
@@ -78,12 +64,21 @@ services:
       - db
       - redis
 
-  sidekiq:
+  sidekiq-low-volume:
     build: .
     image: tootsuite/mastodon:v3.4.6
     restart: always
     env_file: .env.production
-    command: bundle exec sidekiq
+    ### 2022-11-06 lou: increased number of threads, because the queue runs full.
+    ### setting DB_POOL and MAX_THREADS in .env.production didn't change the thread number
+    ### so adding "environment", and additionally "-c " to "command"
+    ### 2022-11-07 nora: decreased MAX_THREADS and -c, to split default and pull queues
+    ### to their own processes
+    ### 2022-11-07 nora: split low volume queues into a low thread sidekiq
+    ### 2022-11-10 secretpeej: change env var to DB_POOL, apply priorities from mastodon default sidekiq.yml
+    environment:
+      - DB_POOL=15
+    command: bundle exec sidekiq -c 15 -q mailers,2 -q scheduler,1
     depends_on:
       - db
       - redis
@@ -92,6 +87,103 @@ services:
       - internal_network
     volumes:
       - ./public/system:/mastodon/public/system
+
+  #   # sidekiq-default-1:
+  #   build: .
+  #   image: tootsuite/mastodon:v3.4.6
+  #   restart: always
+  #   env_file: .env.production
+  #   ### 2022-11-07 nora: split default queue into seperate process
+  #   ### 2022-11-07 nora: add fallbacks so these workers can work on push and pull when default is done
+  #   ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25
+  #   environment:
+  #     - DB_POOL=25
+  #   command: bundle exec sidekiq -c 25 -q default -q push -q pull
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   networks:
+  #     - external_network
+  #     - internal_network
+  #   volumes:
+  #     - ./public/system:/mastodon/public/system
+
+  sidekiq-default-2:
+    build: .
+    image: tootsuite/mastodon:v3.4.6
+    restart: always
+    env_file: .env.production
+    ### 2022-11-07 nora: split default queue into seperate process
+    ### 2022-11-07 nora: add fallbacks so these workers can work on push and pull when default is done
+    ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25, adjust queue order
+    environment:
+      - DB_POOL=25
+    command: bundle exec sidekiq -c 25 -q default -q pull -q push
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+  sidekiq-pull:
+    build: .
+    image: tootsuite/mastodon:v3.4.6
+    restart: always
+    env_file: .env.production
+    ### 2022-11-07 nora: split pull queue into seperate process
+    ### 2022-11-07 nora: add fallbacks so these workers can work on default and push when pull is done
+    environment:
+      - DB_POOL=25
+    command: bundle exec sidekiq -c 25 -q pull -q default -q push
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+  sidekiq-push:
+    build: .
+    image: tootsuite/mastodon:v3.4.6
+    restart: always
+    env_file: .env.production
+    ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25
+    environment:
+      - DB_POOL=25
+    command: bundle exec sidekiq -c 25 -q push -q default -q pull
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+#  es:
+#    restart: always
+#    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
+#    environment:
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#      - "cluster.name=es-mastodon"
+#      - "discovery.type=single-node"
+#      - "bootstrap.memory_lock=true"
+#    networks:
+#      - internal_network
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+#    volumes:
+#      - ./elasticsearch:/usr/share/elasticsearch/data
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+
 ## Uncomment to enable federation with tor instances along with adding the following ENV variables
 ## http_proxy=http://privoxy:8118
 ## ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
