@@ -273,8 +273,8 @@ GEM
     http-parser (1.2.1)
       ffi-compiler (>= 1.0, < 2.0)
     http_accept_language (2.1.1)
-    httplog (1.5.0)
-      rack (>= 1.0)
+    httplog (1.6.0)
+      rack (>= 2.0)
       rainbow (>= 2.0.0)
     i18n (1.8.10)
       concurrent-ruby (~> 1.0)
@@ -483,7 +483,7 @@ GEM
       method_source
       rake (>= 0.8.7)
       thor (~> 1.0)
-    rainbow (3.0.0)
+    rainbow (3.1.1)
     rake (13.0.3)
     rdf (3.1.13)
       hamster (~> 3.0)
@@ -722,7 +722,7 @@ DEPENDENCIES
   htmlentities (~> 4.3)
   http (~> 4.4)
   http_accept_language (~> 2.1)
-  httplog (~> 1.5.0)
+  httplog (~> 1.6.0)
   i18n-tasks (~> 0.9)
   idn-ruby
   iso-639
