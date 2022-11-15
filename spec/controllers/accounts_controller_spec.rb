@@ -3,9 +3,9 @@ require 'rails_helper'
 RSpec.describe AccountsController, type: :controller do
   render_views
 
-  let(:account) { Fabricate(:user).account }
+  let(:account) { Fabricate(:account) }
 
-  shared_examples 'cachable response' do
+  shared_examples 'cacheable response' do
     it 'does not set cookies' do
       expect(response.cookies).to be_empty
       expect(response.headers['Set-Cookies']).to be nil
@@ -35,6 +35,7 @@ RSpec.describe AccountsController, type: :controller do
     before do
       status_media.media_attachments << Fabricate(:media_attachment, account: account, type: :image)
       account.pinned_statuses << status_pinned
+      account.pinned_statuses << status_private
     end
 
     shared_examples 'preliminary checks' do
@@ -117,6 +118,11 @@ RSpec.describe AccountsController, type: :controller do
 
         it 'renders pinned status' do
           expect(response.body).to include(I18n.t('stream_entries.pinned'))
+        end
+
+        it 'does not render private pinned status' do
+          account.pinned_statuses << status_private
+          expect(response.body).to_not include(ActivityPub::TagManager.instance.url_for(status_private))
         end
 
         it 'does not render private status' do
@@ -373,7 +379,7 @@ RSpec.describe AccountsController, type: :controller do
           expect(response.media_type).to eq 'application/activity+json'
         end
 
-        it_behaves_like 'cachable response'
+        it_behaves_like 'cacheable response'
 
         it 'renders account' do
           json = body_as_json
@@ -431,7 +437,7 @@ RSpec.describe AccountsController, type: :controller do
           expect(response.media_type).to eq 'application/activity+json'
         end
 
-        it_behaves_like 'cachable response'
+        it_behaves_like 'cacheable response'
 
         it 'renders account' do
           json = body_as_json
@@ -498,7 +504,7 @@ RSpec.describe AccountsController, type: :controller do
           expect(response).to have_http_status(200)
         end
 
-        it_behaves_like 'cachable response'
+        it_behaves_like 'cacheable response'
       end
 
       context do
