@@ -1,55 +1,62 @@
 version: '3'
 services:
-
   db:
     restart: always
     image: postgres:9.6-alpine
     shm_size: 256mb
-    command: postgres -c max_connections=300 -c shared_buffers=1GB -c effective_cache_size=3GB -c maintenance_work_mem=256MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=1747kB -c min_wal_size=2GB -c max_wal_size=8GB -c max_worker_processes=4 -c max_parallel_workers_per_gather=2
+    ## 2022-11-19 - Lou - try to stop Postgres from OOMing
+    #command: postgres -c max_connections=300 -c shared_buffers=1GB -c effective_cache_size=3GB -c maintenance_work_mem=256MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=1747kB -c min_wal_size=2GB -c max_wal_size=8GB -c max_worker_processes=4 -c max_parallel_workers_per_gather=2
+    #command: postgres -c max_connections=300 -c shared_buffers=512MB -c effective_cache_size=1536MB -c maintenance_work_mem=128MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=873kB -c min_wal_size=2GB -c max_wal_size=8GB -c max_worker_processes=4 -c max_parallel_workers_per_gather=2
+    ## 2022-11-21 - rabbit - tuning via packbats
+    command: postgres -c max_connections=300 -c shared_buffers=768MB -c effective_cache_size=2304MB -c maintenance_work_mem=192MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=1310kB -c min_wal_size=2GB -c max_wal_size=8GB -c max_worker_processes=4 -c max_parallel_workers_per_gather=2
     networks:
       - internal_network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
     volumes:
       - ./postgres:/var/lib/postgresql/data
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
 
   redis:
     restart: always
-    image: redis:6.0-alpine
+    image: redis:6-alpine
     networks:
       - internal_network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
     volumes:
       - ./redis:/data
 
   web:
     build: .
-    image: tootsuite/mastodon:v3.4.6
+    image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     ## 2022-11-14 - Nix - Added MAX_CONCURRENCY
+    ## 2022-11-18 - Lou - MAX_CONCURRENCY -> WEB_CONCURRENCY
     environment:
       - MAX_THREADS=10
-      - MAX_CONCURRENCY=3
+      - WEB_CONCURRENCY=3
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     networks:
       - external_network
       - internal_network
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
+      # prettier-ignore
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:3000/health || exit 1']
     ports:
-      - "127.0.0.1:3000:3000"
+      - '127.0.0.1:3000:3000'
     depends_on:
       - db
       - redis
-#      - es
+      # - es
     volumes:
       - ./public/system:/mastodon/public/system
 
   streaming:
     build: .
-    image: tootsuite/mastodon:v3.4.6
+    image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     command: node ./streaming
@@ -57,16 +64,17 @@ services:
       - external_network
       - internal_network
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
+      # prettier-ignore
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1']
     ports:
-      - "127.0.0.1:4000:4000"
+      - '127.0.0.1:4000:4000'
     depends_on:
       - db
       - redis
 
   sidekiq-low-volume:
     build: .
-    image: tootsuite/mastodon:v3.4.6
+    image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     ### 2022-11-06 lou: increased number of threads, because the queue runs full.
@@ -90,7 +98,7 @@ services:
 
   #   # sidekiq-default-1:
   #   build: .
-  #   image: tootsuite/mastodon:v3.4.6
+  #   image: tootsuite/mastodon:v3.5.5
   #   restart: always
   #   env_file: .env.production
   #   ### 2022-11-07 nora: split default queue into seperate process
@@ -110,7 +118,7 @@ services:
 
   sidekiq-default-2:
     build: .
-    image: tootsuite/mastodon:v3.4.6
+    image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     ### 2022-11-07 nora: split default queue into seperate process
@@ -130,7 +138,7 @@ services:
 
   sidekiq-pull:
     build: .
-    image: tootsuite/mastodon:v3.4.6
+    image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     ### 2022-11-07 nora: split pull queue into seperate process
@@ -149,7 +157,7 @@ services:
 
   sidekiq-push:
     build: .
-    image: tootsuite/mastodon:v3.4.6
+    image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25

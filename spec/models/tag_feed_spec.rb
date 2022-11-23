@@ -37,7 +37,7 @@ describe TagFeed, type: :service do
       expect(results).to     include both
     end
 
-    it 'handles being passed non existant tag names' do
+    it 'handles being passed non existent tag names' do
       results = described_class.new(tag1, nil, any: ['wark']).get(20)
       expect(results).to     include status1
       expect(results).to_not include status2
@@ -54,6 +54,12 @@ describe TagFeed, type: :service do
       status1.account.update(domain: 'example.com')
       status1.update(local: false, uri: 'example.com/toot')
       results = described_class.new(tag1, nil, any: [tag2.name], local: true).get(20)
+      expect(results).to_not include status1
+    end
+
+    it 'excludes local-only posts when specified' do
+      status1.update(local_only: true)
+      results = described_class.new(tag1, nil, any: [tag2.name], without_local_only: true).get(20)
       expect(results).to_not include status1
     end
 
