@@ -17,6 +17,18 @@ services:
       - ./postgres:/var/lib/postgresql/data
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
+  # exposing /metrics endpoint on port 9100 --rabbit
+  ## note: the volume name is unfortunately not modifiable at this moment :(
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
 
   redis:
     restart: always
@@ -124,8 +136,10 @@ services:
     ### 2022-11-07 nora: split default queue into seperate process
     ### 2022-11-07 nora: add fallbacks so these workers can work on push and pull when default is done
     ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25, adjust queue order
+    ### 2022-11-23 rabbit: added MALLOC_ARENA_MAX = 2 for memory issues
     environment:
       - DB_POOL=25
+      - MALLOC_ARENA_MAX=2
     command: bundle exec sidekiq -c 25 -q default -q pull -q push
     depends_on:
       - db
@@ -213,3 +227,4 @@ networks:
   external_network:
   internal_network:
     internal: true
+
