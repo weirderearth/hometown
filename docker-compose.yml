@@ -150,16 +150,19 @@ services:
     volumes:
       - ./public/system:/mastodon/public/system
 
-  sidekiq-pull:
+  sidekiq-pushpull:
     build: .
     image: tootsuite/mastodon:v3.5.5
     restart: always
     env_file: .env.production
     ### 2022-11-07 nora: split pull queue into seperate process
     ### 2022-11-07 nora: add fallbacks so these workers can work on default and push when pull is done
+    ### 2022-11-23 zonorti/packbats: adjust malloc settings to reduce fragmentation
+    ### 2022-11-30 packbats: merge push and pull using weights to reduce number of processes
     environment:
       - DB_POOL=25
-    command: bundle exec sidekiq -c 25 -q pull -q default -q push
+      - MALLOC_ARENA_MAX=2
+    command: bundle exec sidekiq -c 25 -q pull,8 -q push,8 -q default,1
     depends_on:
       - db
       - redis
@@ -169,23 +172,42 @@ services:
     volumes:
       - ./public/system:/mastodon/public/system
 
-  sidekiq-push:
-    build: .
-    image: tootsuite/mastodon:v3.5.5
-    restart: always
-    env_file: .env.production
-    ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25
-    environment:
-      - DB_POOL=25
-    command: bundle exec sidekiq -c 25 -q push -q default -q pull
-    depends_on:
-      - db
-      - redis
-    networks:
-      - external_network
-      - internal_network
-    volumes:
-      - ./public/system:/mastodon/public/system
+        #  sidekiq-pull:
+        #    build: .
+        #    image: tootsuite/mastodon:v3.5.5
+        #    restart: always
+        #    env_file: .env.production
+        #    ### 2022-11-07 nora: split pull queue into seperate process
+        #    ### 2022-11-07 nora: add fallbacks so these workers can work on default and push when pull is done
+        #    environment:
+        #      - DB_POOL=25
+        #    command: bundle exec sidekiq -c 25 -q pull -q default -q push
+        #    depends_on:
+        #      - db
+        #      - redis
+        #    networks:
+        #      - external_network
+        #      - internal_network
+        #    volumes:
+        #      - ./public/system:/mastodon/public/system
+
+        #  sidekiq-push:
+        #    build: .
+        #    image: tootsuite/mastodon:v3.5.5
+        #    restart: always
+        #    env_file: .env.production
+        #    ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25
+        #    environment:
+        #      - DB_POOL=25
+        #    command: bundle exec sidekiq -c 25 -q push -q default -q pull
+        #    depends_on:
+        #      - db
+        #      - redis
+        #    networks:
+        #      - external_network
+        #      - internal_network
+        #    volumes:
+        #      - ./public/system:/mastodon/public/system
 
 #  es:
 #    restart: always
