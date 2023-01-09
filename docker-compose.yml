@@ -49,9 +49,10 @@ services:
     env_file: .env.production
     ## 2022-11-14 - Nix - Added MAX_CONCURRENCY
     ## 2022-11-18 - Lou - MAX_CONCURRENCY -> WEB_CONCURRENCY
+    ## 2023-01-09 - rabbit - decrease WEB_CONCURRENCY from 3 to 2
     environment:
       - MAX_THREADS=10
-      - WEB_CONCURRENCY=3
+      - WEB_CONCURRENCY=2
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     networks:
       - external_network
