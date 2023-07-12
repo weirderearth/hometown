@@ -22,7 +22,7 @@ services:
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'postgres']
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - ./postgres14:/var/lib/postgresql/data
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
   # exposing /metrics endpoint on port 9100 --rabbit
