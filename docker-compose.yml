@@ -50,7 +50,7 @@ services:
 
   web:
     build: .
-    image: ghcr.io/mastodon/mastodon:v3.5.9
+    image: ghcr.io/mastodon/mastodon:v3.5.14
     restart: always
     env_file: .env.production
     ## 2022-11-14 - Nix - Added MAX_CONCURRENCY
@@ -77,7 +77,7 @@ services:
 
   streaming:
     build: .
-    image: ghcr.io/mastodon/mastodon:v3.5.9
+    image: ghcr.io/mastodon/mastodon:v3.5.14
     restart: always
     env_file: .env.production
     command: node ./streaming
@@ -95,7 +95,7 @@ services:
 
   sidekiq-low-volume:
     build: .
-    image: ghcr.io/mastodon/mastodon:v3.5.9
+    image: ghcr.io/mastodon/mastodon:v3.5.14
     restart: always
     env_file: .env.production
     ### 2022-11-06 lou: increased number of threads, because the queue runs full.
