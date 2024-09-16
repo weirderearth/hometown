@@ -1620,6 +1620,7 @@ en:
     weirder-galaxy: Weirder Galaxy
     weirder-sea: Weirder Sea
     weirder-sky: Weirder Sky
+    weirder-wave: Weirder Wave 84
   time:
     formats:
       default: "%b %d, %Y, %H:%M"

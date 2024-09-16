@@ -1,0 +1,74 @@
+// Dependent colors
+$black: #000000;
+
+$classic-base-color: #131033;
+$classic-primary-color: #f2f3f7;
+$classic-secondary-color: #f2f3f7;
+$classic-highlight-color: #ed60ba;
+
+$ui-base-color: $classic-base-color !default;
+$ui-primary-color: $classic-primary-color !default;
+$ui-secondary-color: $classic-secondary-color !default;
+
+// Differences
+$ui-highlight-color: #DF85FF;
+
+$darker-text-color: lighten($ui-primary-color, 20%) !default;
+$dark-text-color: lighten($ui-primary-color, 12%) !default;
+$secondary-text-color: #546A90 !default;
+$highlight-text-color: $classic-highlight-color !default;
+$action-button-color: #546A90;
+
+$inverted-text-color: $black !default;
+$lighter-text-color: darken($ui-base-color, 6%) !default;
+$light-text-color: darken($ui-primary-color, 40%) !default;
+
+@import "application";
+
+.ui, .landing-page, .public-layout {
+  background-color: #0c0a20;
+}
+
+/*
+.floating-action-button, .button {
+  background: linear-gradient(135deg, #ed9100 0%, #fe07d1 100%);
+}
+.admin-wrapper .sidebar ul .simple-navigation-active-leaf a {
+  background: linear-gradient(135deg, #ed9100 0%, #fe07d1 100%);
+}
+*/
+.floating-action-button, .button {
+  background: linear-gradient(135deg, rgba(170,72,236,1) 0%, rgba(244,109,68,1) 100%);
+}
+.admin-wrapper .sidebar ul .simple-navigation-active-leaf a {
+  background: linear-gradient(135deg, rgba(170,72,236,1) 0%, rgba(244,109,68,1) 100%);
+}
+
+.column-header button, .drawer__header {
+   text-shadow: 0 0 10px rgba(170,72,236,1)
+}
+
+.icon-button.active, .star-icon.active, .bookmark-icon.active {
+  //color: $classic-highlight-color;
+  color: #ed60ba;
+}
+/*.bookmark-icon.active {
+  color: rgba(244,109,68,1)
+}*/
+.dropdown-menu__item a:hover {
+  background: linear-gradient(135deg, rgba(170,72,236,1) 0%, rgba(244,109,68,1) 100%);
+  color: white;
+}
+
+.confirmation-modal__secondary-button:hover, .confirmation-modal__secondary-button:focus, .confirmation-modal__secondary-button:active, .confirmation-modal__cancel-button:hover, .confirmation-modal__cancel-button:focus, .confirmation-modal__cancel-button:active, .mute-modal__cancel-button:hover, .mute-modal__cancel-button:focus, .mute-modal__cancel-button:active, .block-modal__cancel-button:hover, .block-modal__cancel-button:focus, .block-modal__cancel-button:active, .confirmation-modal__secondary-button, .confirmation-modal__cancel-button, .mute-modal__cancel-button, .block-modal__cancel-button {
+  color: white;
+}
+
+html body.app-body.theme-weirder-wave.no-reduce-motion.layout-multiple-columns div#mastodon.app-holder div div.ui div.columns-area div.column div.scrollable div.item-list article div div.status__wrapper.status__wrapper-type-none.status__wrapper-public.focusable div.status.status-public div.status__action-bar button.status__action-bar-button.icon-button.disabled i.fa.fa-chain-broken.fa-fw {
+  color: $ui-highlight-color;
+  text-shadow: 0 0 10px rgba(170,72,236,1);
+}
+
+.tabs-bar__link.active {
+  text-shadow: 0 0 10px rgba(170,72,236,1);
+}
