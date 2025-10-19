@@ -1,17 +1,17 @@
 version: '3'
 services:
-  db:
-    restart: always
-    image: postgres:14-alpine
-    shm_size: 256mb
-    networks:
-      - internal_network
-    healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'postgres']
+  # exposing /metrics endpoint on port 9100 --rabbit
+  ## note: the volume name is unfortunately not modifiable at this moment :(
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
     volumes:
-      - ./postgres14:/var/lib/postgresql/data
-    environment:
-      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+      - '/:/host:ro,rslave'
 
   redis:
     restart: always
@@ -59,6 +59,12 @@ services:
     image: ghcr.io/mastodon/mastodon:v4.2.10
     restart: always
     env_file: .env.production
+    ## 2022-11-14 - Nix - Added MAX_CONCURRENCY
+    ## 2022-11-18 - Lou - MAX_CONCURRENCY -> WEB_CONCURRENCY
+    ## 2023-01-09 - rabbit - decrease WEB_CONCURRENCY from 3 to 2
+    environment:
+      - MAX_THREADS=10
+      - WEB_CONCURRENCY=3
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     networks:
       - external_network
@@ -69,7 +75,6 @@ services:
     ports:
       - '127.0.0.1:3000:3000'
     depends_on:
-      - db
       - redis
       # - es
     volumes:
@@ -90,17 +95,24 @@ services:
     ports:
       - '127.0.0.1:4000:4000'
     depends_on:
-      - db
       - redis
 
-  sidekiq:
+  sidekiq-low-volume:
     build: .
     image: ghcr.io/mastodon/mastodon:v4.2.10
     restart: always
     env_file: .env.production
-    command: bundle exec sidekiq
+    ### 2022-11-06 lou: increased number of threads, because the queue runs full.
+    ### setting DB_POOL and MAX_THREADS in .env.production didn't change the thread number
+    ### so adding "environment", and additionally "-c " to "command"
+    ### 2022-11-07 nora: decreased MAX_THREADS and -c, to split default and pull queues
+    ### to their own processes
+    ### 2022-11-07 nora: split low volume queues into a low thread sidekiq
+    ### 2022-11-10 secretpeej: change env var to DB_POOL, apply priorities from mastodon default sidekiq.yml
+    environment:
+      - DB_POOL=15
+    command: bundle exec sidekiq -c 15 -q mailers,2 -q scheduler,1
     depends_on:
-      - db
       - redis
     networks:
       - external_network
@@ -110,22 +122,140 @@ services:
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
 
-  ## Uncomment to enable federation with tor instances along with adding the following ENV variables
-  ## http_proxy=http://privoxy:8118
-  ## ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
-  # tor:
-  #   image: sirboops/tor
-  #   networks:
-  #      - external_network
-  #      - internal_network
-  #
-  # privoxy:
-  #   image: sirboops/privoxy
-  #   volumes:
-  #     - ./priv-config:/opt/config
+  #   # sidekiq-default-1:
+  #   build: .
+  #   image: ghcr.io/mastodon/mastodon:v3.5.9
+  #   restart: always
+  #   env_file: .env.production
+  #   ### 2022-11-07 nora: split default queue into seperate process
+  #   ### 2022-11-07 nora: add fallbacks so these workers can work on push and pull when default is done
+  #   ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25
+  #   environment:
+  #     - DB_POOL=25
+  #   command: bundle exec sidekiq -c 25 -q default -q push -q pull
+  #   depends_on:
+  #     - db
+  #     - redis
   #   networks:
   #     - external_network
   #     - internal_network
+  #   volumes:
+  #     - ./public/system:/mastodon/public/system
+
+  sidekiq-default-2:
+    build: .
+    image: ghcr.io/mastodon/mastodon:v4.0.2
+    restart: always
+    env_file: .env.production
+    ### 2022-11-07 nora: split default queue into seperate process
+    ### 2022-11-07 nora: add fallbacks so these workers can work on push and pull when default is done
+    ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25, adjust queue order
+    ### 2022-11-23 rabbit: added MALLOC_ARENA_MAX = 2 for memory issues
+    environment:
+      - DB_POOL=25
+      - MALLOC_ARENA_MAX=2
+    command: bundle exec sidekiq -c 25 -q default -q pull -q push
+    depends_on:
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+  sidekiq-pushpull:
+    build: .
+    image: ghcr.io/mastodon/mastodon:v4.0.2
+    restart: always
+    env_file: .env.production
+    ### 2022-11-07 nora: split pull queue into seperate process
+    ### 2022-11-07 nora: add fallbacks so these workers can work on default and push when pull is done
+    ### 2022-11-23 zonorti/packbats: adjust malloc settings to reduce fragmentation
+    ### 2022-11-30 packbats: merge push and pull using weights to reduce number of processes
+    environment:
+      - DB_POOL=25
+      - MALLOC_ARENA_MAX=2
+    command: bundle exec sidekiq -c 25 -q pull,8 -q push,8 -q default,1
+    depends_on:
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+        #  sidekiq-pull:
+        #    build: .
+        #    image: ghcr.io/mastodon/mastodon:v3.5.9
+        #    restart: always
+        #    env_file: .env.production
+        #    ### 2022-11-07 nora: split pull queue into seperate process
+        #    ### 2022-11-07 nora: add fallbacks so these workers can work on default and push when pull is done
+        #    environment:
+        #      - DB_POOL=25
+        #    command: bundle exec sidekiq -c 25 -q pull -q default -q push
+        #    depends_on:
+        #      - db
+        #      - redis
+        #    networks:
+        #      - external_network
+        #      - internal_network
+        #    volumes:
+        #      - ./public/system:/mastodon/public/system
+
+        #  sidekiq-push:
+        #    build: .
+        #    image: ghcr.io/mastodon/mastodon:v3.5.9
+        #    restart: always
+        #    env_file: .env.production
+        #    ### 2022-11-10 secretpeej: change env var to DB_POOL, reduce concurrency to 25
+        #    environment:
+        #      - DB_POOL=25
+        #    command: bundle exec sidekiq -c 25 -q push -q default -q pull
+        #    depends_on:
+        #      - db
+        #      - redis
+        #    networks:
+        #      - external_network
+        #      - internal_network
+        #    volumes:
+        #      - ./public/system:/mastodon/public/system
+
+#  es:
+#    restart: always
+#    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
+#    environment:
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#      - "cluster.name=es-mastodon"
+#      - "discovery.type=single-node"
+#      - "bootstrap.memory_lock=true"
+#    networks:
+#      - internal_network
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+#    volumes:
+#      - ./elasticsearch:/usr/share/elasticsearch/data
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+
+## Uncomment to enable federation with tor instances along with adding the following ENV variables
+## http_proxy=http://privoxy:8118
+## ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
+#  tor:
+#    image: sirboops/tor
+#    networks:
+#      - external_network
+#      - internal_network
+#
+#  privoxy:
+#    image: sirboops/privoxy
+#    volumes:
+#      - ./priv-config:/opt/config
+#    networks:
+#      - external_network
+#      - internal_network
 
 networks:
   external_network:
