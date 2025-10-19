@@ -1,5 +1,24 @@
 # See http://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
 
+### lou, 2020-02-02:
+### Syntax checker, for adding changes:
+### http://www.tardis.ed.ac.uk/~sxw/robots/check/
+
+### disallow google entirely
+### see https://support.google.com/webmasters/answer/6062596?hl=de
+#User-agent: Googlebot
+#User-agent: AdsBot-Google
+#Disallow: /
+
+### alterantive: disallow indexing entirely
+### https://www.bjoernsworld.de/suchmaschinen/robots-txt.html
+### test here: https://de.ryte.com/free-tools/robots-txt/ (German)
+### or here: https://sitechecker.pro/robots-tester/ (English)
+User-agent: *
+Disallow: /
+
+### /lou
+
 User-agent: *
 Disallow: /media_proxy/
 Disallow: /interact/
