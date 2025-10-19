@@ -1,0 +1,31 @@
+// Dependent colors
+$black: #000000;
+
+$classic-base-color: #352535;
+$classic-primary-color: #C796C7;
+$classic-secondary-color: #E8D8E8;
+$classic-highlight-color: #DA20DA;
+
+$ui-base-color: $classic-base-color !default;
+$ui-primary-color: $classic-primary-color !default;
+$ui-secondary-color: $classic-secondary-color !default;
+
+// Differences
+$ui-highlight-color: #B93B77;
+
+$darker-text-color: lighten($ui-primary-color, 20%) !default;
+$dark-text-color: lighten($ui-primary-color, 12%) !default;
+$secondary-text-color: #D25F95 !default;
+$highlight-text-color: $classic-highlight-color !default;
+$action-button-color: #BD83BD;
+
+$inverted-text-color: $black !default;
+$lighter-text-color: darken($ui-base-color, 6%) !default;
+$light-text-color: darken($ui-primary-color, 40%) !default;
+
+@import "application";
+
+.ui, .landing-page, .public-layout {
+  background-color: #321120;
+}
+
