@@ -1,0 +1,81 @@
+// Commonly used web colors
+$success-green: #2C8357;    // Padua
+$error-red: #df405a;        // Cerise
+$warning-red: #ff5050;      // Sunset Orange
+$gold-star: #613F85;        // Toggled favorite/boost icons
+
+// Variables for defaults in UI
+$base-shadow-color: #000;
+$base-overlay-background: #fff;
+$base-border-color: #fff;
+$simple-background-color: #fff; // input text fields - $white
+$valid-value-color: $success-green;
+$error-value-color: $error-red;
+
+// Tell UI to use selected colors
+$ui-base-color: #FFCCA6; // Darkest
+$ui-base-lighter-color: #FFE6D4; // Lighter darkest
+$ui-primary-color: #FFE6D4; // Lighter
+$ui-secondary-color: #613F85; // Lightest * Links
+$ui-highlight-color: #8164A1; // Buttons, headings
+
+// Variables for texts
+$primary-text-color: #572500;
+$darker-text-color: #814315; // link card text
+$dark-text-color: #AB6938; // author @handles, timestamps, boosts, link card urls, faded notification text
+$secondary-text-color: #351457; // toot links, @handles
+$highlight-text-color: $ui-highlight-color; // breadcrumbs
+$action-button-color: #C58454; // action buttons - $ui-base-lighter-color
+// For texts on inverted backgrounds
+$inverted-text-color: #D8996B; // pill text
+$lighter-text-color: #8164A1; // publish input controls
+$light-text-color: #DBB69C;
+
+@import "application";
+
+//pretty scrollbars on firefox
+html {
+  scrollbar-color: lighten($ui-highlight-color, 4%) rgba($inverted-text-color, 0.1);
+}
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  scrollbar-width: thin;
+}
+
+
+.status__content .status__content__spoiler-link,
+.reply-indicator__content .status__content__spoiler-link {
+  background-color: #AB6938;
+  color: #FFCCA6;
+  &:hover {
+    background-color: #613F85;
+  }
+}
+
+.ui, .landing-page, .public-layout {
+  background-color: #FFF1E6;
+}
+
+.emoji-mart-anchors* {
+  color: #FFCCA6;
+}
+
+.button, .button.logo-button {
+  color: #FFCCA6;
+}
+
+.compose-form .autosuggest-textarea__textarea {
+  color: #7F4114;
+}
