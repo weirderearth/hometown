@@ -1,0 +1,81 @@
+// Commonly used web colors
+$success-green: #79bd9a;    // Padua
+$error-red: #df405a;        // Cerise
+$warning-red: #ff5050;      // Sunset Orange
+$gold-star: #f26d58;        // Toggled favorite/boost icons
+
+// Variables for defaults in UI
+$base-shadow-color: #154467;
+$base-overlay-background: #154467;
+$base-border-color: #fff;
+$simple-background-color: #fff; // input text fields - $white
+$valid-value-color: $success-green;
+$error-value-color: $error-red;
+
+// Tell UI to use selected colors
+$ui-base-color: #1C547E; // Darkest
+$ui-base-lighter-color: #49CBCB; // Lighter darkest
+$ui-primary-color: #49CBCB; // Lighter
+$ui-secondary-color: #f26d58; // Lightest * Links
+$ui-highlight-color: #f26d58; // Buttons, headings
+
+// Variables for texts
+$primary-text-color: #fff;
+$darker-text-color: $ui-primary-color; // link card text
+$dark-text-color: $ui-base-lighter-color; // author @handles, timestamps, boosts, link card urls, faded notification text
+$secondary-text-color: $ui-secondary-color; // toot links, @handles
+$highlight-text-color: $ui-highlight-color; // breadcrumbs
+$action-button-color: $ui-base-lighter-color; // action buttons - $ui-base-lighter-color
+// For texts on inverted backgrounds
+$inverted-text-color: $ui-base-color; // pill text
+$lighter-text-color: #f26d58; // publish input controls
+$light-text-color: $ui-primary-color;
+
+@import "application";
+
+//pretty scrollbars on firefox
+html {
+  scrollbar-color: lighten($ui-primary-color, 4%) rgba($base-overlay-background, 0.1);
+}
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  scrollbar-width: thin;
+}
+
+.status__content .status__content__spoiler-link,
+.reply-indicator__content .status__content__spoiler-link {
+  background-color: #49CBCB;
+  &:hover {
+    background-color: #f26d58;
+  }
+}
+
+.ui, .landing-page, .public-layout {
+  background-color: #154467;
+}
+
+.column-link {
+  background-color: #154467;
+  color: #49CBCB;
+}
+
+.column-link:hover {
+  color: #f26d58;
+}
+
+.emoji-mart-anchors {
+  background-color: #154467;
+  color: #49CBCB;
+}
