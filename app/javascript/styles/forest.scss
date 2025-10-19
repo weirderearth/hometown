@@ -1,0 +1,42 @@
+// Commonly used web colors
+$success-green: #79bd9a;    // Padua
+$error-red: #df405a;        // Cerise
+$warning-red: #ff5050;      // Sunset Orange
+$gold-star: #00B59B;        // Toggled favorite/boost icons - #ca8f04
+
+// Variables for defaults in UI
+$base-shadow-color: #000;
+$base-overlay-background: #000;
+$base-border-color: #fff;
+$simple-background-color: #FCF8F6; // input text fields - $white
+$valid-value-color: $success-green;
+$error-value-color: $error-red;
+
+// Tell UI to use selected colors
+$ui-base-color: #20371D; // Darkest
+$ui-base-lighter-color: #E5744E; // CC6745 Lighter darkest
+$ui-primary-color: #93d459; // Lighter
+$ui-secondary-color: #D7EEC2; // Lightest * Links
+$ui-highlight-color: #E28F12; // Buttons, headings
+
+// Variables for texts
+$primary-text-color: #fff;
+$darker-text-color: $ui-primary-color; // link card text
+$dark-text-color: $ui-base-lighter-color; // author @handles, timestamps, boosts, link card urls, faded notification text
+$secondary-text-color: $ui-secondary-color; // toot links, @handles
+$highlight-text-color: $ui-highlight-color; // breadcrumbs
+$action-button-color: #E7D392; // #D4B759; // action buttons - $ui-base-lighter-color
+// For texts on inverted backgrounds
+$inverted-text-color: $ui-base-color; // pill text
+$lighter-text-color: $ui-base-lighter-color; // publish input controls
+$light-text-color: $ui-primary-color;
+
+@import "application";
+
+.status__content .status__content__spoiler-link,
+.reply-indicator__content .status__content__spoiler-link {
+  background-color: darken($ui-primary-color, 20%);
+  &:hover {
+    background-color: $ui-primary-color;
+  }
+}
