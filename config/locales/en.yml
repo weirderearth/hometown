@@ -1800,9 +1800,13 @@ en:
   themes:
     contrast: Mastodon (High contrast)
     default: Mastodon (Dark)
-    mastodon-light: Mastodon (Light)
-    macaron: Macaron (Pastel light)
     fairy-floss: Fairy Floss (Pastel dark)
+    macaron: Macaron (Pastel light)
+    mastodon-light: Mastodon (Light)
+    weirder-forest: Weirder Forest
+    weirder-galaxy: Weirder Galaxy
+    weirder-sea: Weirder Sea
+    weirder-sky: Weirder Sky
   time:
     formats:
       default: "%b %d, %Y, %H:%M"
