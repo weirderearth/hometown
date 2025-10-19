@@ -10,7 +10,7 @@ defaults: &defaults
   site_contact_username: ''
   site_contact_email: ''
   registrations_mode: 'none'
-  profile_directory: true
+  profile_directory: false
   closed_registrations_message: ''
   local_live_feed_access: 'public'
   remote_live_feed_access: 'public'
