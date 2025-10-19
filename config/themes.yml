@@ -3,3 +3,7 @@ contrast: styles/contrast.scss
 mastodon-light: styles/mastodon-light.scss
 macaron: styles/macaron.scss
 fairy-floss: styles/fairy-floss.scss
+weirder-sea: styles/sea.scss
+weirder-sky: styles/sky.scss
+weirder-galaxy: styles/galaxy.scss
+weirder-forest: styles/forest.scss
