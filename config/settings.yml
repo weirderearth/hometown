@@ -10,7 +10,7 @@ defaults: &defaults
   site_contact_username: ''
   site_contact_email: ''
   registrations_mode: 'none'
-  profile_directory: true
+  profile_directory: false
   closed_registrations_message: ''
   timeline_preview: true
   show_staff_badge: true
