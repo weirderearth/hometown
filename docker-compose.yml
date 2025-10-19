@@ -56,7 +56,8 @@ services:
 
   web:
     build: .
-    image: ghcr.io/mastodon/mastodon:v4.2.10
+    image: weirder:latest
+    #image: ghcr.io/mastodon/mastodon:v4.2.10
     restart: always
     env_file: .env.production
     ## 2022-11-14 - Nix - Added MAX_CONCURRENCY
@@ -82,7 +83,8 @@ services:
 
   streaming:
     build: .
-    image: ghcr.io/mastodon/mastodon:v4.2.10
+    image: weirder:latest
+    #image: ghcr.io/mastodon/mastodon:v4.2.10
     restart: always
     env_file: .env.production
     command: node ./streaming
@@ -99,7 +101,8 @@ services:
 
   sidekiq-low-volume:
     build: .
-    image: ghcr.io/mastodon/mastodon:v4.2.10
+    image: weirder:latest
+    #image: ghcr.io/mastodon/mastodon:v4.2.10
     restart: always
     env_file: .env.production
     ### 2022-11-06 lou: increased number of threads, because the queue runs full.
@@ -144,7 +147,8 @@ services:
 
   sidekiq-default-2:
     build: .
-    image: ghcr.io/mastodon/mastodon:v4.0.2
+    image: weirder:latest
+    #image: ghcr.io/mastodon/mastodon:v4.0.2
     restart: always
     env_file: .env.production
     ### 2022-11-07 nora: split default queue into seperate process
@@ -165,7 +169,8 @@ services:
 
   sidekiq-pushpull:
     build: .
-    image: ghcr.io/mastodon/mastodon:v4.0.2
+    image: weirder:latest
+    #image: ghcr.io/mastodon/mastodon:v4.0.2
     restart: always
     env_file: .env.production
     ### 2022-11-07 nora: split pull queue into seperate process
