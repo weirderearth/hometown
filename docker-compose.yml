@@ -156,7 +156,7 @@ services:
     environment:
       - DB_POOL=25
       - MALLOC_ARENA_MAX=2
-    command: bundle exec sidekiq -c 25 -q default -q pull -q push
+    command: bundle exec sidekiq -c 25 -q default,2 -q pull -q push -q ingress
     depends_on:
       - redis
     networks:
@@ -178,7 +178,7 @@ services:
     environment:
       - DB_POOL=25
       - MALLOC_ARENA_MAX=2
-    command: bundle exec sidekiq -c 25 -q pull,8 -q push,8 -q default,1
+    command: bundle exec sidekiq -c 25 -q pull,8 -q push,8 -q ingress,8 -q default,1
     depends_on:
       - redis
     networks:
