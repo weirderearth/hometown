@@ -43,6 +43,10 @@ registerRoute(
   }),
 );
 
+/* 20251023 imyxh
+ * disable service worker caching for images, because fetch calls to jortage
+ * are failing and I have no idea why ...
+ * (this may be fixed in upstream mastodon with them switching to vite)
 registerRoute(
   ({ request }) => request.destination === 'image',
   new CacheFirst({
@@ -55,6 +59,7 @@ registerRoute(
     ],
   }),
 );
+*/
 
 // Cause a new version of a registered Service Worker to replace an existing one
 // that is already installed, and replace the currently active worker on open pages.
