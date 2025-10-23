@@ -6,4 +6,4 @@ fairy-floss: styles/fairy-floss.scss
 #weirder-sea: styles/sea.scss
 #weirder-sky: styles/sky.scss
 weirder-galaxy: styles/galaxy.scss
-#weirder-forest: styles/forest.scss
+weirder-forest: styles/forest.scss
