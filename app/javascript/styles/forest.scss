@@ -1,0 +1,79 @@
+// weirder forest - esbe - 2019 august 3
+
+$eggshell: #FCF8F6;
+$spruce: #00B59B;
+$new-growth: #93d459;
+$hayfever: #D7EEC2;
+$rye-orange: #E7D392;
+$cone-orange: #E28F12;
+$fox-orange: #E5744E;
+$undergrowth: #20371D;
+
+// Commonly used web colors
+$success-green: #79bd9a;    // Padua
+$error-red: #df405a;        // Cerise
+$warning-red: #ff5050;      // Sunset Orange
+$gold-star: $spruce;        // Toggled favorite/boost icons - #ca8f04
+
+// Variables for defaults in UI
+$base-shadow-color: #000;
+$base-overlay-background: #000;
+$base-border-color: $spruce; // #fff;
+$simple-background-color: $eggshell; // input text fields - $white
+$valid-value-color: $success-green;
+$error-value-color: $error-red;
+
+$ui-primary-color: $new-growth; // Lighter
+$ui-secondary-color: $hayfever; // Lightest * Links
+$ui-highlight-color: $cone-orange; // Buttons, headings
+
+// Tell UI to use selected colors
+$ui-base-color: $undergrowth; // Darkest
+$ui-base-lighter-color: $fox-orange; // CC6745 Lighter darkest
+$ui-button-background-color: $ui-highlight-color;
+$ui-button-focus-background-color: $ui-base-lighter-color;
+$ui-button-focus-outline-color: $spruce;
+
+$ui-button-secondary-color: $hayfever;
+$ui-button-secondary-border-color: $hayfever;
+$ui-button-secondary-focus-background-color: darken($new-growth, 20%);
+
+$ui-button-tertiary-color: $ui-highlight-color;
+$ui-button-tertiary-border-color: $ui-highlight-color;
+$ui-button-tertiary-focus-background-color: $ui-base-lighter-color;
+
+// Variables for texts
+$primary-text-color: #fff;
+$darker-text-color: $ui-primary-color; // link card text
+$dark-text-color: $ui-base-lighter-color; // author @handles, timestamps, boosts, link card urls, faded notification text
+$secondary-text-color: $ui-secondary-color; // toot links, @handles
+$highlight-text-color: $ui-highlight-color; // breadcrumbs
+$action-button-color: $rye-orange; // action buttons
+// For texts on inverted backgrounds
+$inverted-text-color: $ui-base-color; // pill text
+$lighter-text-color: $ui-base-lighter-color; // publish input controls
+$light-text-color: $ui-primary-color;
+
+
+@import 'application';
+
+.status__content .status__content__spoiler-link,
+.reply-indicator__content .status__content__spoiler-link {
+  background-color: darken($ui-primary-color, 20%);
+  &:hover {
+    background-color: $ui-primary-color;
+  }
+}
+
+.ui {
+  background-color: unset;
+  // background-image:
+  //   linear-gradient(0,
+  //     rgba($ui-base-lighter-color, 0.1),
+  //     transparent 30vh
+  //   );
+}
+
+.column > .scrollable:focus-visible {
+  outline: $ui-button-focus-outline;
+}
