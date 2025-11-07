@@ -26,6 +26,8 @@
 stats.html
 .env
 .env.production
+.env.production-pre-jortage-migration
+.env.development
 node_modules/
 /build/
 
